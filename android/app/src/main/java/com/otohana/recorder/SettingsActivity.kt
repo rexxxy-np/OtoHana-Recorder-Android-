@@ -1,81 +1,69 @@
 package com.otohana.recorder
 
-import android.util.Log
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
-import java.util.concurrent.TimeUnit
+import android.content.Context
+import android.content.SharedPreferences
+import android.os.Bundle
+import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
 
-/**
- * Lightweight API client for the OtoHana Render backend.
- * All calls are suspend functions — call from a coroutine scope.
- */
-object ApiClient {
+class SettingsActivity : AppCompatActivity() {
 
-    private const val TAG = "OtoHanaApi"
+    private lateinit var prefs: SharedPreferences
+    private lateinit var etWatermarkText: EditText
+    private lateinit var switchWatermark: Switch
+    private lateinit var spinnerBitrate: Spinner
+    private lateinit var spinnerAudio: Spinner
+    private lateinit var btnSave: Button
+    private lateinit var tvAppVersion: TextView
 
-    private val http = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(10, TimeUnit.SECONDS)
-        .build()
-
-    private val JSON = "application/json; charset=utf-8".toMediaType()
-
-    // ── Fetch remote config ───────────────────────────────────────────────────
-    suspend fun fetchConfig(): AppConfig? = withContext(Dispatchers.IO) {
-        try {
-            val req = Request.Builder()
-                .url("${Constants.BASE_URL}/api/config")
-                .get()
-                .build()
-            val body = http.newCall(req).execute().use { it.body?.string() } ?: return@withContext null
-            val j = JSONObject(body)
-            AppConfig(
-                latestVersion    = j.optString("latestVersion", "1.0.0"),
-                forceUpdate      = j.optBoolean("forceUpdate", false),
-                defaultWatermark = j.optString("defaultWatermark", Constants.DEFAULT_WATERMARK_TEXT),
-                logoLocked       = j.optBoolean("logoWatermarkLock", true),
-                allowedBitrates  = j.optJSONArray("allowedBitrates")
-                    ?.let { arr -> (0 until arr.length()).map { arr.getInt(it) } }
-                    ?: listOf(2, 4, 8, 16)
-            )
-        } catch (e: Exception) {
-            Log.w(TAG, "fetchConfig failed: $e")
-            null
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_settings)
+        supportActionBar?.apply {
+            title = "Settings"
+            setDisplayHomeAsUpEnabled(true)
         }
+        prefs = getSharedPreferences(Constants.PREF_FILE, Context.MODE_PRIVATE)
+        bindViews()
+        setupSpinners()
+        loadSettings()
+        btnSave.setOnClickListener { saveSettings() }
     }
 
-    // ── Log a completed recording ─────────────────────────────────────────────
-    suspend fun logRecording(
-        deviceId:        String,
-        durationSeconds: Long,
-        bitrateKbps:     Int,
-        audioMode:       String,
-        hasWatermark:    Boolean
-    ): Boolean = withContext(Dispatchers.IO) {
-        try {
-            val payload = JSONObject().apply {
-                put("deviceId",        deviceId)
-                put("durationSeconds", durationSeconds)
-                put("bitrateKbps",     bitrateKbps)
-                put("audioMode",       audioMode)
-                put("hasWatermark",    hasWatermark)
-            }.toString()
-
-            val req = Request.Builder()
-                .url("${Constants.BASE_URL}/api/recordings/log")
-                .post(payload.toRequestBody(JSON))
-                .build()
-
-            val code = http.newCall(req).execute().use { it.code }
-            code in 200..299
-        } catch (e: Exception) {
-            Log.w(TAG, "logRecording failed: $e")
-            false
-        }
+    private fun bindViews() {
+        etWatermarkText = findViewById(R.id.etSettingsWatermarkText)
+        switchWatermark  = findViewById(R.id.switchSettingsWatermark)
+        spinnerBitrate   = findViewById(R.id.spinnerSettingsBitrate)
+        spinnerAudio     = findViewById(R.id.spinnerSettingsAudio)
+        btnSave          = findViewById(R.id.btnSettingsSave)
+        tvAppVersion     = findViewById(R.id.tvSettingsVersion)
     }
+
+    private fun setupSpinners() {
+        ArrayAdapter(this, android.R.layout.simple_spinner_item, Constants.BitrateOption.labels)
+            .also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item); spinnerBitrate.adapter = it }
+        ArrayAdapter(this, android.R.layout.simple_spinner_item, arrayOf("Internal Audio Only", "Internal + Microphone"))
+            .also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item); spinnerAudio.adapter = it }
+    }
+
+    private fun loadSettings() {
+        etWatermarkText.setText(prefs.getString(Constants.PREF_WATERMARK_TEXT, Constants.DEFAULT_WATERMARK_TEXT))
+        switchWatermark.isChecked = prefs.getBoolean(Constants.PREF_WATERMARK_ENABLED, true)
+        spinnerBitrate.setSelection(prefs.getInt(Constants.PREF_BITRATE_INDEX, Constants.DEFAULT_BITRATE))
+        spinnerAudio.setSelection(prefs.getInt(Constants.PREF_AUDIO_MODE, Constants.AUDIO_INTERNAL))
+        tvAppVersion.text = "OtoHana Recorder v1.0.0"
+    }
+
+    private fun saveSettings() {
+        prefs.edit()
+            .putString(Constants.PREF_WATERMARK_TEXT, etWatermarkText.text.toString().trim().ifEmpty { Constants.DEFAULT_WATERMARK_TEXT })
+            .putBoolean(Constants.PREF_WATERMARK_ENABLED, switchWatermark.isChecked)
+            .putInt(Constants.PREF_BITRATE_INDEX, spinnerBitrate.selectedItemPosition)
+            .putInt(Constants.PREF_AUDIO_MODE, spinnerAudio.selectedItemPosition)
+            .apply()
+        Toast.makeText(this, "Settings saved ✓", Toast.LENGTH_SHORT).show()
+        finish()
+    }
+
+    override fun onSupportNavigateUp(): Boolean { finish(); return true }
 }
