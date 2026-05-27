@@ -79,12 +79,3 @@ object ApiClient {
         }
     }
 }
-
-// ── Data class ────────────────────────────────────────────────────────────────
-data class AppConfig(
-    val latestVersion:    String,
-    val forceUpdate:      Boolean,
-    val defaultWatermark: String,
-    val logoLocked:       Boolean,
-    val allowedBitrates:  List<Int>
-)
