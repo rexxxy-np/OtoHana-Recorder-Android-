@@ -1,0 +1,14 @@
+workflows:
+  android-debug:
+    name: OtoHana Debug Build
+    max_build_duration: 30
+    environment:
+      java: 17
+    scripts:
+      - name: Build Debug APK
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+    artifacts:
+      - android/app/build/outputs/apk/debug/*.apk
