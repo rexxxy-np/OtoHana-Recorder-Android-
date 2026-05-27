@@ -5,10 +5,12 @@ workflows:
     environment:
       java: 17
     scripts:
+      - name: Install Gradle
+        script: |
+          brew install gradle || true
       - name: Build Debug APK
         script: |
           cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          gradle assembleDebug
     artifacts:
       - android/app/build/outputs/apk/debug/*.apk
