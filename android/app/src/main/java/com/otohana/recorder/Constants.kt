@@ -4,7 +4,7 @@ object Constants {
 
     // ── Backend ──────────────────────────────────────────────────────────────
     // Replace with your actual Render URL after deployment
-    const val BASE_URL = "https://otohana-backend.onrender.com"
+    const val BASE_URL = "https://otohana-recorder-android.onrender.com"
 
     // ── Recording defaults ────────────────────────────────────────────────────
     const val DEFAULT_WIDTH      = 1920
