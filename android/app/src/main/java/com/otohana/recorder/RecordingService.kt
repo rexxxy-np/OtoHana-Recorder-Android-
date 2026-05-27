@@ -16,6 +16,7 @@ import androidx.core.app.NotificationCompat
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import android.view.Surface
 
 /**
  * Foreground service that handles:
