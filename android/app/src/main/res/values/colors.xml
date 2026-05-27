@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand -->
+    <color name="brand_pink">#FF6B9D</color>
+    <color name="brand_pink_dark">#E8527E</color>
+    <color name="stop_red">#FF4444</color>
+
+    <!-- Backgrounds -->
+    <color name="bg_dark">#0F0F14</color>
+    <color name="bg_card">#1A1A24</color>
+    <color name="bg_input">#22222F</color>
+
+    <!-- Text -->
+    <color name="text_primary">#F0F0F8</color>
+    <color name="text_secondary">#8888AA</color>
+
+    <!-- Switch track -->
+    <color name="track_color">#444466</color>
+</resources>
