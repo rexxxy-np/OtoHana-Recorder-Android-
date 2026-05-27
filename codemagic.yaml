@@ -5,11 +5,13 @@ workflows:
     environment:
       java: 17
     scripts:
-      - name: Install Gradle
+      - name: Install Gradle 8.2
         script: |
-          brew install gradle || true
+          brew install gradle@8 || true
+          export PATH="/usr/local/opt/gradle@8/bin:$PATH"
       - name: Build Debug APK
         script: |
+          export PATH="/usr/local/opt/gradle@8/bin:$PATH"
           cd android
           gradle assembleDebug
     artifacts:
